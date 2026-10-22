@@ -105,25 +105,27 @@ Answer with JSON only, at most 8 short items per list:
  "tools": ["product, model or library names you can read on screen or in the post"]}}{retry}"""
 
 def screen_guard(raw, post):
-    """No transcript to check against, so: complete JSON, short distinct items, tools only from the post or the screen."""
+    """No transcript to check against. Code only removes, never adds: drop repeated items, keep 8, cut each to 12 words,
+    drop "tools" that are neither on screen nor in the post (first screen pass: "laptop", "television"). Refuse only
+    when the answer is not JSON or nothing usable is left."""
     try: v = json.loads(raw)
     except Exception: return None, ["no_json (too long? keep each list to 8 short items)"]
     if not isinstance(v, dict): return None, ["no_json"]
-    r = []; shown = str(v.get("shown") or "").strip()
-    if not shown or len(shown.split()) > 35: r.append("bad_shown")
-    vt = v.get("visible_text") or []
-    if not isinstance(vt, list) or len(vt) > 8: r.append("visible_text_more_than_8")
-    else:
-        if len({norm(str(x)) for x in vt}) < len(vt): r.append("repeated_items")
-        if any(len(str(x).split()) > 12 for x in vt): r.append("item_longer_than_12_words")
-    tools = v.get("tools") or []
-    if not isinstance(tools, list) or len(tools) > 8: r.append("bad_tools")
-    else:
-        seen = norm(post) + " " + norm(" ".join(map(str, vt if isinstance(vt, list) else [])))
-        r += [f"tool_not_on_screen_or_post:{t}" for t in tools if not norm(str(t)) or norm(str(t)) not in seen]
-    if r: return None, r
+    shown = str(v.get("shown") or "").strip()
+    if not shown: return None, ["no_shown"]
+    shown = " ".join(shown.split()[:35])
+    vt, seen_n = [], set()
+    for x in (v.get("visible_text") if isinstance(v.get("visible_text"), list) else []):
+        t = " ".join(str(x).split()[:12]).strip()
+        if t and norm(t) not in seen_n: seen_n.add(norm(t)); vt.append(t)
+    vt = vt[:8]
+    hay = norm(post) + " " + norm(" ".join(vt))
+    tools_in = v.get("tools") if isinstance(v.get("tools"), list) else []
+    tools = [str(t).strip() for t in tools_in if norm(str(t)) and norm(str(t)) in hay]
+    dropped = [str(t) for t in tools_in if str(t).strip() not in tools]
+    if not vt and not tools: return None, ["nothing_readable"]
     return {"kind": "demo", "source": "screen", "claim": shown, "quote": "", "numbers": [], "fixes": [],
-            "tools": list(dict.fromkeys(str(t).strip() for t in tools)), "visible_text": [str(x).strip() for x in vt]}, []
+            "tools": list(dict.fromkeys(tools)), "visible_text": vt, "dropped_tools": dropped}, []
 
 FRAMES = OUT / "frames"; FRAMES.mkdir(parents=True, exist_ok=True)
 
@@ -284,7 +286,8 @@ def main():
         n = page(con, run); print(f"done. {n} notes. Page: {PAGE}"); return
     if a.redo_silent:
         src = sqlite3.connect(SRC_DB); src.row_factory = sqlite3.Row
-        rows = con.execute("select id, duration, transcript from videos where status='silent'").fetchall()
+        rows = [r for r in con.execute("select id, duration, transcript, status from videos where status in ('silent','not_read')")
+                if r["status"] == "silent" or len((r["transcript"] or "").split()) < MIN_WORDS]
         con.execute("insert or replace into video_runs(run, started, done, paused_s) values(?,?,0,0)", (run, start.isoformat())); con.commit()
         print(f"screen pass {run}: {len(rows)} silent videos", flush=True)
         for i, s in enumerate(rows, 1):
