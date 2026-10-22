@@ -70,12 +70,15 @@ def guard(raw, post, transcript):
     else:
         src_digits = set(re.findall(r"\d+", post + " " + transcript))
         r += [f"number_not_said:{n}" for n in nums for d in re.findall(r"\d+", str(n)) if d not in src_digits]
-    fixes = v.get("fixes") or []
-    if not isinstance(fixes, list): r.append("bad_fixes")
-    else:
-        for f in fixes:
-            h, m = norm(str((f or {}).get("heard"))), norm(str((f or {}).get("means")))
-            if not h or not m or h == m or h not in T or m not in P: r.append(f"bad_fix:{(f or {}).get('heard')}")
+    # Fixes are optional. One that can't be checked (heard word not in the transcript, right name not in the post,
+    # or no change) is dropped and never applied, instead of throwing away the whole note (first backlog run: Gemma
+    # filled the list with ordinary words like "plan" or "MCP", and 4 of 12 good notes were lost to that).
+    fixes_in = v.get("fixes") if isinstance(v.get("fixes"), list) else []
+    fixes, v["dropped_fixes"] = [], []
+    for f in fixes_in:
+        h, m = norm(str((f or {}).get("heard"))), norm(str((f or {}).get("means")))
+        (fixes if (h and m and h != m and h in T and m in P) else v["dropped_fixes"]).append(f)
+    v["fixes"] = fixes
     if r: return None, r
     v["tools"] = [str(t).strip() for t in tools]; v["claim"] = claim; v["quote"] = str(v["quote"]).strip()
     # Gemma finds the misheard names; code applies the checked fixes to tools and claim (the quote stays word for word).
@@ -259,12 +262,26 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--limit", type=int, default=20)
     ap.add_argument("--until", default="07:00"); ap.add_argument("--fake-power")
     ap.add_argument("--redo-silent", action="store_true", help="send videos already marked silent through the screen path")
+    ap.add_argument("--redo-not-read", action="store_true", help="ask Gemma again for refused notes, from saved transcripts")
     a = ap.parse_args()
     start = now(); h, m = map(int, a.until.split(":"))
     deadline = start.replace(hour=h, minute=m, second=0, microsecond=0)
     if deadline <= start: deadline += dt.timedelta(days=1)
     run = start.strftime("%Y-%m-%d-%H%M")
     con = open_db()
+    if a.redo_not_read:                               # Gemma again on saved transcripts: no download, no Whisper
+        src = sqlite3.connect(SRC_DB)
+        rows = con.execute("select * from videos where status='not_read' and (notes is null) and length(transcript) > 0").fetchall()
+        print(f"notes pass {run}: {len(rows)} refused notes", flush=True)
+        for i, s in enumerate(rows, 1):
+            if len((s["transcript"] or "").split()) < MIN_WORDS: continue
+            if wait_for_power(deadline, a.fake_power) is None: break
+            post = src.execute("select text from bookmarks where id=?", (s["id"],)).fetchone()[0] or ""
+            t0 = time.time(); notes, calls, reasons = notes_for(post, s["transcript"]); g_s = round(time.time() - t0, 1)
+            save(con, s["run"], s["id"], "ok" if notes else "not_read", duration=s["duration"], transcript=s["transcript"],
+                 notes=notes, calls=calls, reasons=reasons, asr_s=s["asr_s"], gemma_s=g_s)
+            print(f"{i:3} {'ok' if notes else 'not read'}  gemma {g_s}s  {reasons if reasons else ''}", flush=True)
+        n = page(con, run); print(f"done. {n} notes. Page: {PAGE}"); return
     if a.redo_silent:
         src = sqlite3.connect(SRC_DB); src.row_factory = sqlite3.Row
         rows = con.execute("select id, duration, transcript from videos where status='silent'").fetchall()
