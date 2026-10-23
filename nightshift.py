@@ -117,6 +117,10 @@ def wait_for_power(deadline, fake=None, poll_s=30):
         time.sleep(poll_s)
     paused = round(time.time() - t0); log("resume", paused_s=paused)
     print(f"  plugged in again after {paused} s, resuming", flush=True)
+    # A long outage (or a sleeping laptop) can outlast the time limit: power came back at 09:01 after a 03:00 limit
+    # on 23 Oct, and the run went on. Check the limit again before working.
+    if now() >= deadline:
+        log("stop_after_resume", paused_s=paused); return None
     return paused
 
 # ---------- storage ----------
