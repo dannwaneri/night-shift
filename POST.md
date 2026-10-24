@@ -43,7 +43,7 @@ It never spent my battery on a video. One limit: it can only tell "plugged in" f
 
 ## Code
 
-[YOU: GitHub embed, e.g. {% github dannwaneri/night-shift %}]
+{% github dannwaneri/night-shift %}
 
 ## How I Built It
 
