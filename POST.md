@@ -98,7 +98,7 @@ What it cost me: one check. I watched the 10 sample videos once, about 8 minutes
 
 I used it this week, on my own saves. It ran on Thursday and Friday, through the three power cuts above, and from Saturday it starts by itself at 23:00 and does whatever I saved that day while I sleep.
 
-[YOU: add a line in your own words if you want, e.g. the first thing you searched for.]
+I searched my notes for "distribution" and got nothing. The videos I save are about tools, not about how people sell them. That was useful to learn too.
 
 ## Prize Categories
 
