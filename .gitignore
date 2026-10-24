@@ -2,3 +2,4 @@ out/
 __pycache__/
 *.pyc
 demo/out/
+label_*.md
