@@ -12,7 +12,7 @@ I save things on X all day and almost never go back to them. A few months ago I 
 
 It only reads text. That used to be fine. Over the years about 9% of what I saved was video. This month it was 45 of 60, three out of four. So most of what I save now never reaches the tool I built to use it, and I never rewatch any of it.
 
-[YOU: one or two lines in your own words, e.g. why you save tech videos and what happens to them.]
+I save them because I am fascinated by them, and I might need to copy ideas from them in the future. I am learning distribution.
 
 So I gave the job to the night shift. Every night it looks at my saved videos whose post is about tech, keeps the ones that are 3 minutes or less, and turns each one into a short note I can search: what the video is about, the tools it names, the numbers it gives, and a word-for-word quote as proof.
 
