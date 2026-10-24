@@ -12,7 +12,10 @@ speech = [r for r in rows if json.loads(r["notes"]).get("source") != "screen"]
 random.seed(23)                                   # fixed seed: the sample is chosen once, not re-rolled
 pick = random.sample(speech, min(len(speech), N - min(len(screen), N // 2))) + random.sample(screen, min(len(screen), N // 2))
 random.shuffle(pick)
-(OUT / "review_ids.json").write_text(json.dumps([r["id"] for r in pick]))
+import os
+if os.environ.get("ONLY_IDS"):
+    want = json.loads(os.environ["ONLY_IDS"]); pick = [r for r in rows if r["id"] in want]
+if not os.environ.get("ONLY_IDS"): (OUT / "review_ids.json").write_text(json.dumps([r["id"] for r in pick]))
 e = html.escape; cards = []
 for i, r in enumerate(pick, 1):
     n = json.loads(r["notes"]); b = src.execute("select text, url, author_username from bookmarks where id=?", (r["id"],)).fetchone()
@@ -28,7 +31,7 @@ for i, r in enumerate(pick, 1):
     cards.append(f'''<article data-n="{i}"><p class="num">{i} · @{e(b["author_username"] or "")} · <a href="{e(b["url"])}" target="_blank">open the video</a></p>
 <p class="claim">{e(n["claim"])}</p><p class="tools">{" · ".join(e(t) for t in n["tools"])}</p>{f"<ul class=fix>{fixes}</ul>" if fixes else ""}
 {check}<div class="btns"><button data-v="y">Accurate</button><button data-v="n">Not accurate</button></div></article>''')
-(OUT / "review.html").write_text(f"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+(OUT / os.environ.get("REVIEW_OUT", "review.html")).write_text(f"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Check the notes once</title><style>body{{font:16px/1.5 system-ui,sans-serif;max-width:720px;margin:0 auto;padding:20px 16px 120px;background:#f6f7f9;color:#16181d}}
 article{{background:#fff;border:1px solid #e1e4ea;border-radius:12px;padding:14px 16px;margin:0 0 16px}}.num{{margin:0;color:#6a7280;font-size:.9rem}}
 .claim{{font-weight:650;margin:6px 0}}.tools{{color:#1d4ed8;margin:4px 0}}.how{{color:#555b66;font-size:.92rem;margin:8px 0 4px}}
