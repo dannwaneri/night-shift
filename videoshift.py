@@ -11,7 +11,7 @@ the laptop is plugged in (light is on), this:
 Usage: python videoshift.py [--limit 20] [--until 07:00] [--fake-power FILE]
        python videoshift.py search <words>
 """
-import argparse, datetime as dt, html, json, os, re, sqlite3, subprocess, sys, time
+import argparse, datetime as dt, difflib, html, json, os, re, sqlite3, subprocess, sys, time
 from pathlib import Path
 
 from nightshift import (OUT, SRC_DB, MODEL, SECRET, WAT, log, http_json, wait_for_power, now)
@@ -22,6 +22,7 @@ PY = sys.executable
 AUD = OUT / "audio"; AUD.mkdir(parents=True, exist_ok=True)
 DB = OUT / "night.db"; PAGE = OUT / "video_notes.html"
 MAX_S, MIN_WORDS = 180, 10
+FIX_MIN_SIMILARITY = 0.6   # letters of heard vs. means; see guard()
 TECH = re.compile(r"\b(ai|llm|llms|agent|agents|agentic|model|models|gpt|claude|gemini|gemma|llama|qwen|code|coding|coder|"
                   r"python|javascript|typescript|rust|api|gpu|cuda|vram|inference|fine-?tun\w*|rag|mcp|cursor|copilot|"
                   r"open[- ]?source|github|repo|demo|tutorial|benchmark|prompt\w*|token\w*|deploy\w*|cloudflare|workers?|"
@@ -77,7 +78,10 @@ def guard(raw, post, transcript):
     fixes, v["dropped_fixes"] = [], []
     for f in fixes_in:
         h, m = norm(str((f or {}).get("heard"))), norm(str((f or {}).get("means")))
-        (fixes if (h and m and h != m and h in T and m in P) else v["dropped_fixes"]).append(f)
+        # The two spellings must also look alike (Olamar/Ollama 0.83, Agentec/Agentic 0.79). Without this, Gemma
+        # swapped "Chan GPT" for "Claude" because the post said Claude - and the video said ChatGPT (review, 24 Oct).
+        alike = difflib.SequenceMatcher(None, re.sub(r"[^a-z0-9]", "", h), re.sub(r"[^a-z0-9]", "", m)).ratio() >= FIX_MIN_SIMILARITY
+        (fixes if (h and m and h != m and h in T and m in P and alike) else v["dropped_fixes"]).append(f)
     v["fixes"] = fixes
     if r: return None, r
     v["tools"] = [str(t).strip() for t in tools]; v["claim"] = claim; v["quote"] = str(v["quote"]).strip()
