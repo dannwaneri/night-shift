@@ -1,5 +1,5 @@
 ---
-title: "My saved tech videos, turned into notes while the light is on"
+title: "I never rewatch what I save. A night shift turned 56 of my videos into notes, and waited out a 10-hour power cut to do it."
 published: false
 tags: devchallenge, hf26challenge, gemma, opensource
 ---
