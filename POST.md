@@ -23,7 +23,7 @@ Two open models do the work:
 
 The best ideas are born out of laziness. I did not want to watch 97 videos. Now I don't have to.
 
-## The slow and steady part
+### The slow and steady part
 
 I live in Port Harcourt, Nigeria. Grid power ("light") goes off often and for hours, and a laptop running AI on the CPU empties its battery fast. So the night shift only works while the laptop is plugged in. The moment it drops to battery, it stops, saves its place, and waits. When light comes back, it carries on.
 
@@ -92,7 +92,13 @@ Before this, I tried to give Gemma a different job, and I am keeping the result 
 
 ## The Lazy Payoff
 
-[YOU: your own words. Suggested facts to use: 97 videos you were never going to watch; 56 now have notes you can search; you checked 10 once so you never have to watch the rest; each night it does the new ones while you sleep.]
+In minutes, the honest number is small: the 56 videos with notes add up to 51 minutes. But I was never going to watch them, so before this those 51 minutes were simply lost. Now they are 56 notes I can search.
+
+What it cost me: one check. I watched the 10 sample videos once, about 8 minutes of video, so I never have to watch the rest.
+
+I used it this week, on my own saves. It ran on Thursday and Friday, through the three power cuts above, and from Saturday it starts by itself at 23:00 and does whatever I saved that day while I sleep.
+
+[YOU: add a line in your own words if you want, e.g. the first thing you searched for.]
 
 ## Prize Categories
 
