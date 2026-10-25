@@ -39,7 +39,7 @@ It never spent my battery on a video. One limit: it can only tell "plugged in" f
 
 ## Demo
 
-[YOU: YouTube embed, e.g. {% youtube VIDEO_ID %}]
+{% youtube O8FxXiGkiY0 %}
 
 ## Code
 
